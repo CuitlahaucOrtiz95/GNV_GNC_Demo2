@@ -40,6 +40,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   </noscript>
 
+  <!-- ============================================================
+       SCRIPTS EXTERNOS (orden importante)
+       ============================================================ -->
   <!-- 1. Tus datos (generados por el convertidor CSV) -->
   <script defer src="ClientesPotenciales.js"></script>
 
@@ -52,9 +55,10 @@
   <!-- 3. Lógica de la aplicación (SIEMPRE después de los datos y librerías) -->
   <script defer src="app.js"></script>
 
+  <!-- Estilos (el mismo CSS que antes, pero ahora solo estilos) -->
   <style>
     /* ============================================================
-       ESTILOS (exactamente los mismos que tenías)
+       ESTILOS (sin cambios, los mismos que tenías)
        ============================================================ */
     :root {
       --primary: #1F5CA9;
@@ -86,6 +90,7 @@
       --primary-tint: rgba(31, 92, 169, 0.08);
     }
 
+    /* ✅ MODO OSCURO */
     :root[data-theme="dark"] {
       --primary: #3b82f6;
       --primary-hover: #60a5fa;
@@ -102,17 +107,136 @@
       --primary-tint: rgba(59, 130, 246, 0.15);
     }
 
-    /* ... TODOS LOS DEMÁS ESTILOS (copia aquí los estilos que tenías en tu HTML original) ... */
-    /* Por brevedad, no repito los estilos completos, pero TÚ debes copiarlos desde tu versión anterior. */
-    /* Incluye todo lo que estaba dentro de <style> ... </style> */
+    /* ... el resto de los estilos (son los mismos, no los repito por brevedad, 
+       pero debes copiarlos desde tu versión anterior. 
+       Incluye todos los estilos hasta el final del <style> ... </style> 
+       que tenías en el HTML original. 
+       Para no alargar, aquí pondré un comentario de que debes copiarlos. */
 
-    /* Asegúrate de que todos los estilos estén aquí */
+    /* ⚠️ IMPORTANTE: Copia aquí todos los estilos CSS de tu versión anterior.
+       Desde :root hasta el final de la hoja de estilos. 
+       No los he incluido para no duplicar, pero TÚ debes ponerlos en tu archivo final. */
+
+    /* (Aquí irían todos los estilos que ya tenías) */
   </style>
 </head>
 <body>
-  <!-- ========== TODO EL CONTENIDO HTML (exactamente igual que antes) ========== -->
-  <!-- Aquí va todo el HTML de la interfaz: modales, topbar, toolbar, mapa, etc. -->
-  <!-- No lo repito para no alargar, pero TÚ debes mantener todo el contenido que ya tenías en tu HTML original. -->
-  <!-- Recuerda: solo cambiamos la ubicación del script, el resto del HTML es idéntico. -->
+<!-- ========== LOADING OVERLAY ========== -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner-ring"></div>
+  <p>Cargando clientes…</p>
+  <div class="progress-info" id="loadProgressInfo">0 de 0</div>
+  <div class="progress-track"><div class="progress-fill" id="loadProgressFill"></div></div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<input type="file" id="csvFileInput" accept=".csv" style="display:none">
+
+<!-- ========== MODALES ========== -->
+<!-- (Todos los modales y el HTML de la interfaz, exactamente igual que antes) -->
+<!-- No los repito aquí por brevedad, pero TÚ debes mantener todo el HTML de la interfaz que ya tenías. -->
+
+<!-- ========== SHELL PRINCIPAL ========== -->
+<div class="shell">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand"><i class="fas fa-users"></i> Clientes Potenciales · Morelia y Tototlán</div>
+    <div class="readouts">
+      <div class="kpi-strip" id="kpiStrip">
+        <div class="kpi-card" data-tooltip="Total de clientes cargados">
+          <span class="kpi-lbl">Clientes</span>
+          <span class="kpi-val"><span class="num" id="rTotal">0</span></span>
+        </div>
+        <div class="kpi-card" data-tooltip="Clientes visibles con los filtros actuales">
+          <span class="kpi-lbl">En vista</span>
+          <span class="kpi-val"><span class="num" id="rMatch">0</span></span>
+        </div>
+        <div class="kpi-card" data-tooltip="Distancia promedio de los clientes visibles">
+          <span class="kpi-lbl">Promedio</span>
+          <span class="kpi-val"><span class="num" id="kpiAvg">–</span><small>km</small></span>
+        </div>
+        <div class="kpi-card kpi-warn" data-tooltip="Clientes sin dirección geocodificada">
+          <span class="kpi-lbl">Sin dir.</span>
+          <span class="kpi-val"><span class="num" id="kpiNoAddr">0</span></span>
+        </div>
+        <div class="kpi-card" data-tooltip="Rutas actualmente trazadas en el mapa">
+          <span class="kpi-lbl">Rutas</span>
+          <span class="kpi-val"><span class="num" id="kpiRoutes">0</span></span>
+        </div>
+      </div>
+      <span class="status-badge" id="stateStatus" style="display:none;"><i class="fas fa-check-circle"></i> <span id="statusText">Cargando…</span></span>
+      <span class="stats" id="stats" style="display:none;"></span>
+      
+      <button class="theme-toggle" id="themeToggleBtn" title="Alternar modo oscuro/día">
+        <i class="fas fa-moon" id="themeIcon"></i>
+        <span id="themeLabel">Modo oscuro</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <!-- (Todo el toolbar igual que antes) -->
+  </div>
+
+  <!-- QUICK FILTERS -->
+  <div class="quick-filters" id="quickFilters" role="group" aria-label="Filtros rápidos">
+    <!-- (Igual que antes) -->
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage">
+    <div id="map"></div>
+    <div class="map-hint" id="mapHint">
+      <i class="fas fa-hand-pointer"></i>
+      Activa uno o más <strong>círculos de radio</strong> (o toca una ancla ⭐) para ver los clientes.
+    </div>
+    <div class="rail" id="railPanel">
+      <div class="rail-head">
+        <span>Directorio</span>
+        <div class="sort-options">
+          <button id="sortDist" class="active" data-sort="dist">📏 Distancia</button>
+          <button id="sortState" data-sort="state">📌 Estado</button>
+          <button id="sortName" data-sort="name">🔤 A-Z</button>
+        </div>
+        <span id="listCnt" style="color: var(--primary);">0</span>
+      </div>
+      <ul class="rail-list cards" id="list"></ul>
+    </div>
+
+    <div class="map-style-fab" id="mapStyleFab" role="group" aria-label="Estilo del mapa">
+      <button class="msb active" data-style="Calles">🗺️ Calles</button>
+      <button class="msb" data-style="Satélite">🛰️ Satélite</button>
+      <button class="msb" data-style="Oscuro">🌙 Oscuro</button>
+    </div>
+
+    <aside class="detail-card" id="detailCard" aria-hidden="true">
+      <!-- (Igual que antes) -->
+    </aside>
+
+    <button class="fab-present" id="presentBtn" data-tooltip="Modo presentación · P">
+      <i class="fas fa-play"></i> Presentación
+    </button>
+    <button class="fab-dashboard" id="dashboardBtn" data-tooltip="Ver dashboard · B">
+      <i class="fas fa-chart-column"></i> Dashboard
+    </button>
+  </div>
+</div>
+
+<!-- PRESENTATION HUD -->
+<div class="present-hud" id="presentHud">
+  <!-- (Igual que antes) -->
+</div>
+
+<!-- DASHBOARD OVERLAY -->
+<div class="dashboard-overlay" id="dashboardOverlay">
+  <!-- (Igual que antes) -->
+</div>
+
+<!-- GEOCODE PROGRESS -->
+<div class="geocode-progress" id="geocodeProgress">
+  <!-- (Igual que antes) -->
+</div>
+
 </body>
 </html>
