@@ -1,6 +1,6 @@
-
 // ============================================================
 // app.js - Lógica completa de la aplicación
+// (CON EL FILTRO DE TAMAÑO CORREGIDO)
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ============================================================
-  // 2. CARGA DE CLIENTES (desde JS externo o localStorage)
+  // 2. CARGA DE CLIENTES
   // ============================================================
   let rawClientes = Array.isArray(window.CLIENTES_POTENCIALES) ? window.CLIENTES_POTENCIALES : [];
 
@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ============================================================
-  // 🚀 Lógica de resaltado de pines (Highlight)
+  // 🚀 Lógica de resaltado de pines
   // ============================================================
   let marcadorResaltado = null;
 
@@ -495,17 +495,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function resaltarMarcador(marker, cliente) {
     limpiarResaltado();
-
     if (!marker || !cliente) return;
-
     if (!marker._iconoOriginal) {
       marker._iconoOriginal = marker.getIcon();
     }
-
     const color = cliente._matchColor || cliente.priceColor || '#1F5CA9';
     const ringColor = colorPorTamano(cliente);
     const iconoResaltado = iconoPin(color, ringColor, true);
-
     marker.setIcon(iconoResaltado);
     marcadorResaltado = marker;
   }
@@ -517,12 +513,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function abrirDetalle(cliente) {
     if (!cliente) return;
-    
     const entry = markerMap.get(cliente);
     if (entry) {
       resaltarMarcador(entry.marker, cliente);
     }
-
     const d = cliente._matchDist < 10 ? cliente._matchDist.toFixed(1) : Math.round(cliente._matchDist || 0);
     const esM = cliente._matchAncla === 'Morelia';
     const dcHead = document.querySelector('.dc-head');
@@ -669,7 +663,6 @@ document.addEventListener('DOMContentLoaded', function() {
         title: s.nombre
       });
       marker._iconoOriginal = iconoNormal;
-      
       marker.on('click', function() {
         abrirDetalle(s);
       });
@@ -1146,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('sortName').addEventListener('click', function() { sortMode = 'name'; marcarSortActivo('sortName'); applyFilters(); });
 
   // ============================================================
-  // 🟢 CONTROL GLOBAL DEL MODO OSCURO (UI, no el mapa)
+  // 🟢 CONTROL GLOBAL DEL MODO OSCURO
   // ============================================================
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   const themeIcon = document.getElementById('themeIcon');
@@ -2273,9 +2266,11 @@ document.addEventListener('DOMContentLoaded', function() {
   })();
 
   // ============================================================
-  // CORRECCIÓN: Event listener para el filtro de tamaño
+  // 🟢 CORRECCIÓN: Event listener para el filtro de tamaño
   // ============================================================
+  // Este es el bloque que faltaba en la versión anterior
   document.getElementById('tamanoFilter').addEventListener('change', function() {
+    // Desactivar cualquier chip de filtro rápido para mantener coherencia visual
     document.querySelectorAll('.qf-chip.active').forEach(c => c.classList.remove('active'));
     const allChip = document.querySelector('.qf-chip[data-qf="all"]');
     if (allChip) allChip.classList.add('active');
@@ -2316,7 +2311,7 @@ document.addEventListener('DOMContentLoaded', function() {
   clearAllBtn.addEventListener('click', limpiarFiltros);
 
   // ============================================================
-  // CORRECCIÓN FINAL: BOTONES DE ESTILO DE MAPA (Satélite y Oscuro)
+  // CORRECCIÓN FINAL: BOTONES DE ESTILO DE MAPA
   // ============================================================
   const mapStyleFab = document.getElementById('mapStyleFab');
   mapStyleFab.addEventListener('click', function(e) {
