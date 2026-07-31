@@ -3267,6 +3267,16 @@ document.addEventListener('DOMContentLoaded', function() {
   })();
 
   // ============================================================
+  // CORRECCIÓN: Event listener para el filtro de tamaño
+  // ============================================================
+  document.getElementById('tamanoFilter').addEventListener('change', function() {
+    document.querySelectorAll('.qf-chip.active').forEach(c => c.classList.remove('active'));
+    const allChip = document.querySelector('.qf-chip[data-qf="all"]');
+    if (allChip) allChip.classList.add('active');
+    applyFilters();
+  });
+
+  // ============================================================
   // CORRECCIÓN FINAL: EVENTOS DEL BUSCADOR Y LIMPIAR FILTROS
   // ============================================================
   const searchInput = document.getElementById('searchInput');
